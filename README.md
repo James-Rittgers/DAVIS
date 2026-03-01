@@ -18,3 +18,9 @@ Plan for first release
 - Rebinding for keys
 - Customizable wake word (default is Davis)
 - A gui for easy configuration
+
+
+Future Stuff:
+- Easy installation and use for the average user
+- .exe and .tar.gz application stuff
+- Custom trained model with the mooonshine fine-tune https://github.com/pierre-cheneau/finetune-moonshine-asr
