@@ -112,6 +112,30 @@ control_dict = {
     'r': 'right'
 }
 
+replace_dict = {
+            'barrage': '',
+            'air strike': 'airstrike',
+            ' strike': '',
+            'orbitel': 'orbital',
+            'century': 'sentry',
+            'auto cannon': 'autocannon',
+            'relay': '',
+            'mines': 'mine',
+            'minefield': 'mine',
+            'ark': 'arc',
+            'thriller': 'thrower',
+            'rail cannon': 'railcannon',
+            'fast recon': 'fast recon vehicle',
+            'recoilest': 'recoilless',
+            'hellbomb': 'hell bomb',
+            '.': '',
+            ',': '',
+            '?': '',
+            '!': '',
+            ';': '',
+            ':': ''
+}
+
 pyautogui.PAUSE=0
 pyautogui.FAILSAFE=False
 def enter_strategem(strategem):
@@ -119,15 +143,34 @@ def enter_strategem(strategem):
         pyautogui.keyDown(control_dict[i])
         pyautogui.keyUp(control_dict[i])
 
+def format(txt):
+    txt = txt.strip().lower()
+
+    for key in replace_dict.keys():
+        if key in txt:
+            txt = txt.replace(key, replace_dict[key])
+
+    return txt.strip()
+
 model_path, model_arch = get_model_for_language("en", 5)
 
 mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
-update_interval=0.3, samplerate=50000)
+update_interval=0.1, samplerate=16000)
 
 class GoofyListener(TranscriptEventListener):
 
     def on_line_completed(self, event):
-        print(event.line.text)
+        text_in = format(event.line.text)
+        print(text_in)
+
+        if 'davis' in text_in:
+            print('Activated!')
+            command = text_in.split('davis')[1]
+
+            strategem = rapidfuzz.process.extract(query=command, choices=callins.keys(), scorer=rapidfuzz.fuzz.QRatio, score_cutoff=50)[0][0]
+            print(f'Detected: {strategem}')
+
+
 
 
 listener = GoofyListener()
