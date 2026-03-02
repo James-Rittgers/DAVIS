@@ -167,17 +167,21 @@ class GoofyListener(TranscriptEventListener):
 
         if wake_word in text_in:
             print('Activated!')
-            command = text_in.split('davis')[1].strip()
+            commands = text_in.split('davis')[1].strip()
 
-            strategem = rapidfuzz.process.extract(query=command, choices=callins.keys(), scorer=rapidfuzz.fuzz.QRatio, score_cutoff=50)
-            
-            if strategem != []:
-                strategem = strategem[0][0]
-                print(f'Detected: {strategem}')
-                enter_strategem(strategem)
+            if 'and' in commands:
+                commands = commands.split['and']
 
-            else:
-                print('No strategem detected...')
+            for command in commands:
+                strategem = rapidfuzz.process.extract(query=command, choices=callins.keys(), scorer=rapidfuzz.fuzz.QRatio, score_cutoff=50)
+                
+                if strategem != []:
+                    strategem = strategem[0][0]
+                    print(f'Detected: {strategem}')
+                    enter_strategem(strategem)
+    
+                else:
+                    print('No strategem detected...')
 
 print('Listening...')
 listener = GoofyListener()
@@ -185,4 +189,4 @@ mic_transcriber.add_listener(listener)
 mic_transcriber.start()
 
 while True:
-    time.sleep(0.01)
+    time.sleep(0.1)
