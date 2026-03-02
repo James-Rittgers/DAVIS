@@ -1,8 +1,8 @@
 **DAVIS -- Voice assistant for Helldivers 2**
 
 Davis or, the 
-**D**emocracy
-**A**ssisted
+**D**emocratically
+**A**pproved
 **V**oice
 **I**nput
 **S**ystem
