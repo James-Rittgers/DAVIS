@@ -1,6 +1,7 @@
 import time
 import rapidfuzz
 import pyttsx3
+import pyautogui
 
 from moonshine_voice import(
     MicTranscriber,
@@ -8,6 +9,115 @@ from moonshine_voice import(
     get_model_for_language,
     download
 )
+
+callins = {
+    # Patriotic Administration Center
+    'expendable anti-tank': 'ddlur',
+    'machine gun': 'dldur',
+    'anti-material rifle': 'dlrud',
+    'stalwart': 'dlduul',
+    'recoilless rifle': 'dlrrl',
+    'flamethrower': 'dludu',
+    'autocannon': 'dlduur',
+    'heavy machine gun': 'dludd',
+    'airburst rocket launcher': 'duulr',
+    'commando': 'dludr',
+    'railgun': 'drdulr',
+    'spear': 'ddudd',
+    'wasp': 'ddudr',
+
+    # Orbital Cannons
+    'orbital gatling': 'rdluu',
+    'orbital airburst': 'rrr',
+    'orbital 120': 'rrdlrd',
+    'orbital 380': 'rduuldd',
+    'orbital walking': 'rdrdrd',
+    'orbital laser': 'rdurd',
+    'orbital napalm': 'rrdlru',
+    'orbital railcannon': 'ruddr',
+
+    # Hangar
+    'eagle strafe': 'urr',
+    'eagle airstrike': 'urdr',
+    'eagle cluster': 'urddr',
+    'eagle napalm': 'urdu',
+    'jump pack': 'duudu',
+    'eagle smoke': 'urud',
+    'eagle rocket pods': 'urul',
+    'eagle 500 kg': 'urddd',
+    'fast recon vehicle': 'ldrdrdu',
+
+    # Bridge
+    'orbital precision': 'rru',
+    'orbital gas': 'rrdr',
+    'orbital ems': 'rrld',
+    'orbital smoke': 'rrdu',
+    'hmg emplacement': 'dulrrl',
+    'shield generator': 'ddlrlr',
+    'tesla tower': 'durulr',
+    'grenadier battlement': 'drdlr',
+
+    # Engineering Bay
+    'anti-personnel mine': 'dlur',
+    'supply pack': 'dlduud',
+    'grenade launcher': 'dluld',
+    'laser cannon': 'dldul',
+    'incendiary mine': 'dlld',
+    'laser dog': 'dulurr',
+    'ballistic shield': 'dlddul',
+    'arc thrower': 'drdull',
+    'anti-tank mine': 'dluu',
+    'quasar cannon': 'ddulr',
+    'shield generator backpack': 'dulrlr',
+    'gas mine': 'dllr',
+    
+    # Robotics workshop
+    'machine gun sentry': 'durru',
+    'gatling sentry': 'durl',
+    'mortar sentry': 'durrd',
+    'bullet dog': 'dulurd',
+    'autocannon sentry': 'durulu',
+    'rocket sentry': 'durrl',
+    'ems mortar': 'durdr',
+    'mortar': 'durdr',
+    'patriot': 'ldruldd',
+    'emancipator': 'ldruldu',
+
+    # Redacted Regiment
+    'c4 pack': 'druuru',
+
+    # Common
+    'reinforce': 'udrlu',
+    'sos': 'udru',
+    'resupply': 'ddur',
+    'eagle rearm': 'uulur',
+
+    #Objectives
+    'sssd': 'ddduu',
+    'prospecting drill': 'ddlrdd',
+    'super earth flag': 'dudu',
+    'hell bomb': 'duldurdu',
+    'upload data': 'lruuu',
+    'seismic probe': 'uulrdd',
+
+    # Other
+    's e a f artillery': 'ruud',
+    'super destroyer': 'uuddlrlr'       
+}
+
+control_dict = {
+    'd': 'down',
+    'u': 'up',
+    'l': 'left',
+    'r': 'right'
+}
+
+pyautogui.PAUSE=0
+pyautogui.FAILSAFE=False
+def enter_strategem(strategem):
+    for i in callins[strategem]:
+        pyautogui.keyDown(control_dict[i])
+        pyautogui.keyUp(control_dict[i])
 
 model_path, model_arch = get_model_for_language("en", 5)
 
