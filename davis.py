@@ -10,6 +10,8 @@ from moonshine_voice import(
     download
 )
 
+wake_word = 'davis'
+
 callins = {
     # Patriotic Administration Center
     'expendable anti-tank': 'ddlur',
@@ -136,7 +138,7 @@ replace_dict = {
             ':': ''
 }
 
-pyautogui.PAUSE=0
+pyautogui.PAUSE=0.01
 pyautogui.FAILSAFE=False
 def enter_strategem(strategem):
     for i in callins[strategem]:
@@ -163,19 +165,24 @@ class GoofyListener(TranscriptEventListener):
         text_in = format(event.line.text)
         print(text_in)
 
-        if 'davis' in text_in:
+        if wake_word in text_in:
             print('Activated!')
-            command = text_in.split('davis')[1]
+            command = text_in.split('davis')[1].strip()
 
-            strategem = rapidfuzz.process.extract(query=command, choices=callins.keys(), scorer=rapidfuzz.fuzz.QRatio, score_cutoff=50)[0][0]
-            print(f'Detected: {strategem}')
+            strategem = rapidfuzz.process.extract(query=command, choices=callins.keys(), scorer=rapidfuzz.fuzz.QRatio, score_cutoff=50)
+            
+            if strategem != []:
+                strategem = strategem[0][0]
+                print(f'Detected: {strategem}')
+                enter_strategem(strategem)
 
+            else:
+                print('No strategem detected...')
 
-
-
+print('Listening...')
 listener = GoofyListener()
 mic_transcriber.add_listener(listener)
 mic_transcriber.start()
 
 while True:
-    time.sleep(0.1)
+    time.sleep(0.01)
