@@ -115,35 +115,48 @@ control_dict = {
 }
 
 replace_dict = {
-            'barrage': '',
-            'air strike': 'airstrike',
-            ' strike': '',
-            'orbitel': 'orbital',
-            'century': 'sentry',
-            'auto cannon': 'autocannon',
-            'relay': '',
-            'mines': 'mine',
-            'minefield': 'mine',
-            'ark': 'arc',
-            'thriller': 'thrower',
-            'rail cannon': 'railcannon',
-            'fast recon': 'fast recon vehicle',
-            'recoilest': 'recoilless',
-            'hellbomb': 'hell bomb',
-            '.': '',
-            ',': '',
-            '?': '',
-            '!': '',
-            ';': '',
-            ':': ''
+    'barrage': '',
+    'air strike': 'airstrike',
+    ' strike': '',
+    'orbitel': 'orbital',
+    'century': 'sentry',
+    'auto cannon': 'autocannon',
+    'relay': '',
+    'mines': 'mine',
+    'minefield': 'mine',
+    'ark': 'arc',
+    'thriller': 'thrower',
+    'rail cannon': 'railcannon',
+    'fast recon': 'fast recon vehicle',
+    'recoilest': 'recoilless',
+    'hellbomb': 'hell bomb',
+    '.': '',
+    ',': '',
+    '?': '',
+    '!': '',
+    ';': '',
+    ':': ''
 }
 
 pyautogui.PAUSE=0.01
 pyautogui.FAILSAFE=False
-def enter_strategem(strategem):
-    for i in callins[strategem]:
-        pyautogui.keyDown(control_dict[i])
-        pyautogui.keyUp(control_dict[i])
+def enter_strategem(formatted_txt):
+
+    strategem = rapidfuzz.process.extract(query=formatted_txt, 
+                                        choices=callins.keys(), 
+                                        scorer=rapidfuzz.fuzz.QRatio, 
+                                        score_cutoff=50)
+    
+    if strategem != []:
+        strategem = strategem[0][0]
+        print(f'Detected: {strategem}')
+
+        for i in callins[strategem]:
+            pyautogui.keyDown(control_dict[i])
+            pyautogui.keyUp(control_dict[i])
+    else:
+        print('No strategem detected...')
+
 
 def format(txt):
     txt = txt.strip().lower()
@@ -154,34 +167,30 @@ def format(txt):
 
     return txt.strip()
 
+
 model_path, model_arch = get_model_for_language("en", 5)
 
 mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
-update_interval=0.1, samplerate=16000)
+                                update_interval=0.1, samplerate=16000)
 
 class GoofyListener(TranscriptEventListener):
 
     def on_line_completed(self, event):
-        text_in = format(event.line.text)
-        print(text_in)
+        raw_txt = format(event.line.text)
+        print(raw_txt)
 
-        if wake_word in text_in:
+        if wake_word in raw_txt:
             print('Activated!')
-            commands = text_in.split('davis')[1].strip()
+            formatted_txt = raw_txt.split('davis')[1].strip()
+            print(formatted_txt)
+            if 'and' in formatted_txt:
+                commands = formatted_txt.split('and')
 
-            if 'and' in commands:
-                commands = commands.split['and']
+                for command in commands:
+                    enter_strategem(command)
 
-            for command in commands:
-                strategem = rapidfuzz.process.extract(query=command, choices=callins.keys(), scorer=rapidfuzz.fuzz.QRatio, score_cutoff=50)
-                
-                if strategem != []:
-                    strategem = strategem[0][0]
-                    print(f'Detected: {strategem}')
-                    enter_strategem(strategem)
-    
-                else:
-                    print('No strategem detected...')
+            else:
+                enter_strategem(formatted_txt)
 
 print('Listening...')
 listener = GoofyListener()
