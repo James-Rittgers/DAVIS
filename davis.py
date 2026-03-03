@@ -139,9 +139,9 @@ replace_dict = {
     ';': '',
     ':': ''
 }
+
 tts.say('Ready to support democracy with you, sir')
 tts.runAndWait()
-
 tts.say('Power cycle your headset')
 tts.runAndWait()
 
