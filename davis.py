@@ -2,6 +2,7 @@ import time
 import rapidfuzz
 import pyttsx3
 import pyautogui
+import mouse
 
 from moonshine_voice import(
     MicTranscriber,
@@ -154,6 +155,9 @@ def enter_strategem(formatted_txt):
         for i in callins[strategem]:
             pyautogui.keyDown(control_dict[i])
             pyautogui.keyUp(control_dict[i])
+        
+        print(f'Entered strategem: {strategem}')
+
     else:
         print('No strategem detected...')
 
@@ -176,6 +180,7 @@ mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
 class GoofyListener(TranscriptEventListener):
 
     def on_line_completed(self, event):
+        global mouse_down
         raw_txt = format(event.line.text)
         print(raw_txt)
 
@@ -189,6 +194,9 @@ class GoofyListener(TranscriptEventListener):
                 for command in commands:
                     enter_strategem(command)
 
+                    while mouse_down:
+                        time.sleep(0.01)
+
             else:
                 enter_strategem(formatted_txt)
 
@@ -199,3 +207,6 @@ mic_transcriber.start()
 
 while True:
     time.sleep(0.1)
+
+    mouse_down = mouse.is_pressed("left")
+    strat_down = mouse.is_pressed('')
