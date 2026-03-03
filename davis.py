@@ -139,6 +139,11 @@ replace_dict = {
     ';': '',
     ':': ''
 }
+tts.say('Ready to support democracy with you, sir')
+tts.runAndWait()
+
+tts.say('Power cycle your headset')
+tts.runAndWait()
 
 pyautogui.PAUSE=0.01
 pyautogui.FAILSAFE=False
@@ -158,22 +163,29 @@ def enter_strategem(formatted_txt):
         # tts.runAndWait()
         print('Waiting for strategem key down')
     
-        while strat_down == False:
-            time.sleep(0.1)
+        # Strategem key is not held or the mouse is down
+        while strat_down == False or mouse_down == True:
+            time.sleep(0.01)
 
         for i in callins[strategem]:
             pyautogui.keyDown(control_dict[i])
             pyautogui.keyUp(control_dict[i])
         
         print(f'Entered strategem: {strategem}')
-        tts.say('Entered strategem')
-        tts.runAndWait()
+        # tts.say('Entered strategem')
+        # tts.runAndWait()
 
+        print('Waiting for mouse down...')
+        # Wait for a mouse down to throw
         while mouse_down == False:
-            time.sleep(0.1)   
+            time.sleep(0.01)   
 
+        print('Waiting for mouse up...')
+        # Wait for a mouse up to finish throw
         while mouse_down == True:
-            time.sleep(0.1)     
+            time.sleep(0.01)
+
+        print('Finished')     
 
     else:
         print('No strategem detected...')
@@ -210,16 +222,13 @@ class GoofyListener(TranscriptEventListener):
             print(formatted_txt)
             if 'and' in formatted_txt:
                 commands = formatted_txt.split('and')
-                tts.say(f'{len(commands)} commands detected')
-                tts.runAndWait()
+                # tts.say(f'multiple commands detected')
+                # tts.runAndWait()
 
                 for command in commands:
-                    tts.say(f'Command {commands.index(command) +1}')
-                    tts.runAndWait()
+                    # tts.say(f'Command {commands.index(command) +1}')
+                    # tts.runAndWait()
                     enter_strategem(command)
-
-                    while mouse_down:
-                        time.sleep(0.01)
 
             else:
                 enter_strategem(formatted_txt)
