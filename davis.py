@@ -12,6 +12,7 @@ from moonshine_voice import(
 )
 
 wake_word = 'davis'
+tts = pyttsx3.init()
 
 callins = {
     # Patriotic Administration Center
@@ -153,6 +154,8 @@ def enter_strategem(formatted_txt):
         strategem = strategem[0][0]
         print(f'Detected: {strategem}')
 
+        # tts.say('Waiting for keydown')
+        # tts.runAndWait()
         print('Waiting for strategem key down')
     
         while strat_down == False:
@@ -163,6 +166,8 @@ def enter_strategem(formatted_txt):
             pyautogui.keyUp(control_dict[i])
         
         print(f'Entered strategem: {strategem}')
+        tts.say('Entered strategem')
+        tts.runAndWait()
 
         while mouse_down == False:
             time.sleep(0.1)   
@@ -198,12 +203,19 @@ class GoofyListener(TranscriptEventListener):
 
         if wake_word in raw_txt:
             print('Activated!')
+            tts.say('Right away sir')
+            tts.runAndWait()
+
             formatted_txt = raw_txt.split('davis')[1].strip()
             print(formatted_txt)
             if 'and' in formatted_txt:
                 commands = formatted_txt.split('and')
+                tts.say(f'{len(commands)} commands detected')
+                tts.runAndWait()
 
                 for command in commands:
+                    tts.say(f'Command {commands.index(command) +1}')
+                    tts.runAndWait()
                     enter_strategem(command)
 
                     while mouse_down:
