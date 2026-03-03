@@ -11,7 +11,6 @@ from moonshine_voice import(
     download
 )
 
-wake_word = 'davis'
 tts = pyttsx3.init()
 
 callins = {
@@ -86,6 +85,8 @@ callins = {
     'mortar': 'durdr',
     'patriot': 'ldruldd',
     'emancipator': 'ldruldu',
+    'bastion': 'ldrdldudu',
+
 
     # Redacted Regiment
     'c4 pack': 'druuru',
@@ -132,6 +133,7 @@ replace_dict = {
     'fast recon': 'fast recon vehicle',
     'recoilest': 'recoilless',
     'hellbomb': 'hell bomb',
+    'air ': 'airburst',
     '.': '',
     ',': '',
     '?': '',
@@ -145,7 +147,7 @@ tts.runAndWait()
 tts.say('Power cycle your headset')
 tts.runAndWait()
 
-pyautogui.PAUSE=0.01
+pyautogui.PAUSE=0.05
 pyautogui.FAILSAFE=False
 def enter_strategem(formatted_txt):
     global strat_down, mouse_down
@@ -201,10 +203,10 @@ def format(txt):
     return txt.strip()
 
 
-model_path, model_arch = get_model_for_language("en", 5)
+model_path, model_arch = get_model_for_language("en", 2)
 
 mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
-                                update_interval=0.1, samplerate=16000)
+                                update_interval=0.5, samplerate=16000)
 
 class GoofyListener(TranscriptEventListener):
 
@@ -213,7 +215,7 @@ class GoofyListener(TranscriptEventListener):
         raw_txt = format(event.line.text)
         print(raw_txt)
 
-        if wake_word in raw_txt:
+        if 'davis' in raw_txt or 'divis' in raw_txt:
             print('Activated!')
             tts.say('Right away sir')
             tts.runAndWait()
