@@ -176,13 +176,13 @@ def enter_strategem(formatted_txt):
         # tts.runAndWait()
 
         print('Waiting for mouse down...')
-        # Wait for a mouse down to throw
-        while mouse_down == False:
+        # Wait for a mouse down to throw or strategem key release
+        while mouse_down == False or strat_down == False:
             time.sleep(0.01)   
 
         print('Waiting for mouse up...')
-        # Wait for a mouse up to finish throw
-        while mouse_down == True:
+        # Wait for a mouse up to finish throw or strategem key release
+        while mouse_down == True or strat_down == False:
             time.sleep(0.01)
 
         print('Finished')     
