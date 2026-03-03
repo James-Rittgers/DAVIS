@@ -142,6 +142,7 @@ replace_dict = {
 pyautogui.PAUSE=0.01
 pyautogui.FAILSAFE=False
 def enter_strategem(formatted_txt):
+    global strat_down
 
     strategem = rapidfuzz.process.extract(query=formatted_txt, 
                                         choices=callins.keys(), 
@@ -151,6 +152,10 @@ def enter_strategem(formatted_txt):
     if strategem != []:
         strategem = strategem[0][0]
         print(f'Detected: {strategem}')
+
+        print('Waiting for strategem key down')
+        while not strat_down:
+            time.sleep(0.1)
 
         for i in callins[strategem]:
             pyautogui.keyDown(control_dict[i])
@@ -209,4 +214,4 @@ while True:
     time.sleep(0.1)
 
     mouse_down = mouse.is_pressed("left")
-    strat_down = mouse.is_pressed('')
+    strat_down = mouse.is_pressed('x2')
