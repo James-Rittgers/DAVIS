@@ -147,7 +147,7 @@ tts.runAndWait()
 tts.say('Power cycle your headset')
 tts.runAndWait()
 
-pyautogui.PAUSE=0.05
+pyautogui.PAUSE=0.07
 pyautogui.FAILSAFE=False
 def enter_strategem(formatted_txt):
     global strat_down, mouse_down
@@ -210,12 +210,16 @@ mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
 
 class GoofyListener(TranscriptEventListener):
 
+    def on_line_started(self, event):
+        print(event.line.text)
+
     def on_line_completed(self, event):
         global mouse_down
         raw_txt = format(event.line.text)
         print(raw_txt)
 
-        if 'davis' in raw_txt or 'divis' in raw_txt:
+        # Add wake word fuzz!
+        if 'davis' in raw_txt or 'divis' in raw_txt or 'david' in raw_txt:
             print('Activated!')
             tts.say('Right away sir')
             tts.runAndWait()
