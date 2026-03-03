@@ -161,7 +161,7 @@ def enter_strategem(formatted_txt):
 
         # tts.say('Waiting for keydown')
         # tts.runAndWait()
-        print('Waiting for strategem key down')
+        print('Waiting for strategem key down or mouse up')
     
         # Strategem key is not held or the mouse is down
         while strat_down == False or mouse_down == True:
@@ -177,12 +177,12 @@ def enter_strategem(formatted_txt):
 
         print('Waiting for mouse down...')
         # Wait for a mouse down to throw or strategem key release
-        while mouse_down == False or strat_down == False:
+        while mouse_down == False and strat_down == True:
             time.sleep(0.01)   
 
         print('Waiting for mouse up...')
         # Wait for a mouse up to finish throw or strategem key release
-        while mouse_down == True or strat_down == False:
+        while mouse_down == True and strat_down == True:
             time.sleep(0.01)
 
         print('Finished')     
