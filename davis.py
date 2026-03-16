@@ -3,13 +3,16 @@ import rapidfuzz
 import pyttsx3
 import pyautogui
 import mouse
+import subprocess
 
 from moonshine_voice import(
     MicTranscriber,
     TranscriptEventListener,
     get_model_for_language,
-    download
+    download,
+    transcriber
 )
+from james_transcriber import JamesTranscriber
 
 tts = pyttsx3.init()
 
@@ -147,7 +150,7 @@ tts.runAndWait()
 tts.say('Power cycle your headset')
 tts.runAndWait()
 
-pyautogui.PAUSE=0.07
+pyautogui.PAUSE=0.03
 pyautogui.FAILSAFE=False
 def enter_strategem(formatted_txt):
     global strat_down, mouse_down
@@ -205,13 +208,13 @@ def format(txt):
 
 model_path, model_arch = get_model_for_language("en", 2)
 
-mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
-                                update_interval=0.5, samplerate=16000)
+mic_transcriber = JamesTranscriber(model_path=model_path, model_arch=model_arch,
+                                update_interval=0.7, samplerate=16000, m_options={"vad_window_duration": "0.25", "vad_max_segment_duration": "10"})
 
 class GoofyListener(TranscriptEventListener):
 
-    def on_line_started(self, event):
-        print(event.line.text)
+    # def on_line_started(self, event):
+    #     print(event.line.text)
 
     def on_line_completed(self, event):
         global mouse_down
@@ -219,7 +222,7 @@ class GoofyListener(TranscriptEventListener):
         print(raw_txt)
 
         # Add wake word fuzz!
-        if 'davis' in raw_txt or 'divis' in raw_txt or 'david' in raw_txt:
+        if 'davis' in raw_txt:
             print('Activated!')
             tts.say('Right away sir')
             tts.runAndWait()
@@ -244,8 +247,8 @@ listener = GoofyListener()
 mic_transcriber.add_listener(listener)
 mic_transcriber.start()
 
-while True:
-    time.sleep(0.1)
+print(subprocess.run("for i in $(pgrep python); do sudo renice -n -20 -p $i; done", shell=True, capture_output=True))
 
+while True:
     mouse_down = mouse.is_pressed("left")
     strat_down = mouse.is_pressed('x2')
