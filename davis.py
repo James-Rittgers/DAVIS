@@ -126,6 +126,7 @@ replace_dict = {
     ' strike': '',
     'orbitel': 'orbital',
     'orville': 'orbital',
+    'oral': 'orbital',
     'century': 'sentry',
     'auto cannon': 'autocannon',
     'relay': '',
@@ -212,7 +213,8 @@ model_path, model_arch = get_model_for_language("en", 2)
 mic_transcriber = JamesTranscriber(model_path=model_path, model_arch=model_arch,
                                 update_interval=0.7, samplerate=16000, m_options={"vad_window_duration": "0.5",
                                                                                 "vad_max_segment_duration": "15", 
-                                                                                "transcription_interval": "0.05"})
+                                                                                "transcription_interval": "0.1",
+                                                                                "vad_threshold": "0.05"})
 
 class GoofyListener(TranscriptEventListener):
 
