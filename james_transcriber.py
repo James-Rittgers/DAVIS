@@ -14,7 +14,7 @@ from typing import Callable
 
 
 class JamesTranscriber:
-    """JamesTranscriber is a class that transcribes audio from a microphone."""
+    """MicTranscriber is a class that transcribes audio from a microphone."""
 
     def __init__(
         self,
