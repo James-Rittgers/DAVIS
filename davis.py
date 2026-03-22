@@ -10,7 +10,10 @@ from moonshine_voice import(
     TranscriptEventListener,
     get_model_for_language,
     download,
-    transcriber
+    transcriber,
+    IntentRecognizer,
+    EmbeddingModelArch,
+    get_embedding_model
 )
 from james_transcriber import JamesTranscriber
 
@@ -18,7 +21,7 @@ tts = pyttsx3.init()
 
 callins = {
     # Patriotic Administration Center
-    'expendable anti-tank': 'ddlur',
+    'anti tank': 'ddlur',
     'machine gun': 'dldur',
     'anti-material rifle': 'dlrud',
     'stalwart': 'dlduul',
@@ -146,23 +149,42 @@ replace_dict = {
     ':': ''
 }
 
-tts.say('Ready to support democracy with you, sir')
-tts.runAndWait()
-tts.say('Power cycle your headset')
-tts.runAndWait()
+
 
 pyautogui.PAUSE=0.03
 pyautogui.FAILSAFE=False
-def enter_strategem(formatted_txt):
+def enter_strategem(trigger, utterance, similarity):
     global strat_down, mouse_down
 
-    strategem = rapidfuzz.process.extract(query=formatted_txt, 
-                                        choices=callins.keys(), 
-                                        scorer=rapidfuzz.fuzz.QRatio, 
-                                        score_cutoff=50)
+    # if 'davis' in raw_txt:
+    #     print('Activated!')
+    #     tts.say('Right away sir')
+    #     tts.runAndWait()
+
+    #     formatted_txt = raw_txt.split('davis')[1].strip()
+    #     print(formatted_txt)
+    #     if 'and' in formatted_txt:
+    #         commands = formatted_txt.split('and')
+    #         # tts.say(f'multiple commands detected')
+    #         # tts.runAndWait()
+
+    #         for command in commands:
+    #             # tts.say(f'Command {commands.index(command) +1}')
+    #             # tts.runAndWait()
+    #             enter_strategem(command)
+
+    #     else:
+    #         enter_strategem(formatted_txt)
+
+    # strategem = rapidfuzz.process.extract(query=trigger, 
+    #                                     choices=callins.keys(), 
+    #                                     scorer=rapidfuzz.fuzz.QRatio, 
+    #                                     score_cutoff=50)
+
+    strategem = trigger
     
     if strategem != []:
-        strategem = strategem[0][0]
+        # strategem = strategem[0][0]
         print(f'Detected: {strategem}')
 
         # tts.say('Waiting for keydown')
@@ -211,43 +233,45 @@ model_path, model_arch = get_model_for_language("en", 2)
 
 mic_transcriber = JamesTranscriber(model_path=model_path, model_arch=model_arch,
                                 update_interval=0.7, samplerate=16000, m_options={"vad_window_duration": "0.5",
-                                                                                "vad_max_segment_duration": "15", 
-                                                                                "transcription_interval": "0.05"})
+                                                                                "vad_max_segment_duration": "2", 
+                                                                                "transcription_interval": "0.01",
+                                                                                "vad_threshold": '0.5'})
 
 class GoofyListener(TranscriptEventListener):
-
-    # def on_line_started(self, event):
-    #     print(event.line.text)
 
     def on_line_completed(self, event):
         global mouse_down
         raw_txt = format(event.line.text)
         print(raw_txt)
 
-        # Add wake word fuzz!
-        if 'davis' in raw_txt:
-            print('Activated!')
-            tts.say('Right away sir')
-            tts.runAndWait()
 
-            formatted_txt = raw_txt.split('davis')[1].strip()
-            print(formatted_txt)
-            if 'and' in formatted_txt:
-                commands = formatted_txt.split('and')
-                # tts.say(f'multiple commands detected')
-                # tts.runAndWait()
+embedding_model = "embeddinggemma-300m"
+quantization = "q4"
+embedding_model_path, embedding_model_arch = get_embedding_model(
+    embedding_model, "q4"
+)
+intent_recognizer = IntentRecognizer(
+    model_path=embedding_model_path, 
+    model_arch=embedding_model_arch,
+    model_variant=quantization,
+    threshold=0.6,
+)
 
-                for command in commands:
-                    # tts.say(f'Command {commands.index(command) +1}')
-                    # tts.runAndWait()
-                    enter_strategem(command)
+listy = list(callins.keys())
+for strategem in listy:
+    intent_recognizer.register_intent(strategem, enter_strategem)
+    print(f'Registered {strategem}')
 
-            else:
-                enter_strategem(formatted_txt)
+tts.say('Ready to support democracy with you, sir')
+tts.runAndWait()
+
+strat_down = False
+mouse_down = False
 
 print('Listening...')
 listener = GoofyListener()
 mic_transcriber.add_listener(listener)
+mic_transcriber.add_listener(intent_recognizer)
 mic_transcriber.start()
 
 print(subprocess.run("for i in $(pgrep python); do sudo renice -n -20 -p $i; done", shell=True, capture_output=True))
