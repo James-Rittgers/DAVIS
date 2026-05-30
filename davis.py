@@ -233,9 +233,9 @@ model_path, model_arch = get_model_for_language("en", 2)
 
 mic_transcriber = JamesTranscriber(model_path=model_path, model_arch=model_arch,
                                 update_interval=0.7, samplerate=16000, m_options={"vad_window_duration": "0.5",
-                                                                                "vad_max_segment_duration": "2", 
+                                                                                "vad_max_segment_duration": "10", 
                                                                                 "transcription_interval": "0.01",
-                                                                                "vad_threshold": '0.5'})
+                                                                                "vad_threshold": '0.3'})
 
 class GoofyListener(TranscriptEventListener):
 
@@ -254,7 +254,7 @@ intent_recognizer = IntentRecognizer(
     model_path=embedding_model_path, 
     model_arch=embedding_model_arch,
     model_variant=quantization,
-    threshold=0.6,
+    threshold=0.7,
 )
 
 listy = list(callins.keys())
