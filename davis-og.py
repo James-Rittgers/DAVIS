@@ -217,7 +217,8 @@ def format(txt):
     return txt.strip()
 
 
-model_path, model_arch = get_model_for_language("en", 2)
+# model_path, model_arch = get_model_for_language("en", 2)
+model_path, model_arch = get_model_for_language("en", 5)
 
 mic_transcriber = JamesTranscriber(model_path=model_path, model_arch=model_arch,
                                 update_interval=0.5,
