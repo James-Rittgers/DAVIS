@@ -1,9 +1,10 @@
 import time
 import rapidfuzz
-import pyttsx3
 import pyautogui
 import mouse
+import threading
 import subprocess
+import queue
 
 from moonshine_voice import(
     MicTranscriber,
@@ -12,13 +13,11 @@ from moonshine_voice import(
     download,
     transcriber
 )
-from james_transcriber import JamesTranscriber
 
-tts = pyttsx3.init()
 
 callins = {
     # Patriotic Administration Center
-    'expendable anti-tank': 'ddlur',
+    'eat': 'ddlur',
     'machine gun': 'dldur',
     'anti-material rifle': 'dlrud',
     'stalwart': 'dlduul',
@@ -80,7 +79,7 @@ callins = {
     # Robotics workshop
     'machine gun sentry': 'durru',
     'gatling sentry': 'durl',
-    'mortar sentry': 'durrd',
+    'mortar': 'durrd',
     'bullet dog': 'dulurd',
     'autocannon sentry': 'durulu',
     'rocket sentry': 'durrl',
@@ -93,6 +92,15 @@ callins = {
 
     # Redacted Regiment
     'c4 pack': 'druuru',
+
+    # Entrenched Division
+    'cremator': 'ddrduu',
+    'gas mortar': 'durdl',
+
+    # Exo Experts
+    'bullet storm': 'dldrul',
+    'breakthrough': 'ldrlrdu',
+    'lumberer': 'ldrurlu',
 
     # Common
     'reinforce': 'udrlu',
@@ -123,6 +131,7 @@ control_dict = {
 replace_dict = {
     'barrage': '',
     'air strike': 'airstrike',
+    'one twenty': '120',
     ' strike': '',
     'orbitel': 'orbital',
     'orville': 'orbital',
@@ -146,55 +155,53 @@ replace_dict = {
     ':': ''
 }
 
-tts.say('Ready to support democracy with you, sir')
-tts.runAndWait()
-tts.say('Power cycle your headset')
-tts.runAndWait()
 
-pyautogui.PAUSE=0.03
+
+pyautogui.PAUSE=0.05
 pyautogui.FAILSAFE=False
-def enter_strategem(formatted_txt):
-    global strat_down, mouse_down
+def enter_stratagem():
 
-    strategem = rapidfuzz.process.extract(query=formatted_txt, 
-                                        choices=callins.keys(), 
-                                        scorer=rapidfuzz.fuzz.QRatio, 
-                                        score_cutoff=50)
-    
-    if strategem != []:
-        strategem = strategem[0][0]
-        print(f'Detected: {strategem}')
-
-        # tts.say('Waiting for keydown')
-        # tts.runAndWait()
-        print('Waiting for strategem key down or mouse up')
-    
-        # Strategem key is not held or the mouse is down
-        while strat_down == False or mouse_down == True:
-            time.sleep(0.01)
-
-        for i in callins[strategem]:
-            pyautogui.keyDown(control_dict[i])
-            pyautogui.keyUp(control_dict[i])
+    while True:
+        formatted_txt = strat_queue.get()
+        strategem = rapidfuzz.process.extract(query=formatted_txt, 
+                                            choices=callins.keys(), 
+                                            scorer=rapidfuzz.fuzz.QRatio, 
+                                            score_cutoff=50)
         
-        print(f'Entered strategem: {strategem}')
-        # tts.say('Entered strategem')
-        # tts.runAndWait()
+        if strategem != []:
+            tts_queue.put('Right away sir')
+            strategem = strategem[0][0]
+            print(f'Detected: {strategem}')
 
-        print('Waiting for mouse down...')
-        # Wait for a mouse down to throw or strategem key release
-        while mouse_down == False and strat_down == True:
-            time.sleep(0.01)   
 
-        print('Waiting for mouse up...')
-        # Wait for a mouse up to finish throw or strategem key release
-        while mouse_down == True and strat_down == True:
-            time.sleep(0.01)
+            print('Waiting for strategem key down or mouse up')
+        
+            # Strategem key is not held or the mouse is down
+            while not strat_down.is_set() and not mouse_down.is_set():
+                time.sleep(0.1)
 
-        print('Finished')     
+            for i in callins[strategem]:
+                pyautogui.keyDown(control_dict[i])
+                pyautogui.keyUp(control_dict[i])
+            
+            print(f'Entered strategem: {strategem}')
 
-    else:
-        print('No strategem detected...')
+
+            print('Waiting for mouse down...')
+            # Wait for a mouse down to throw or strategem key release
+            
+            while strat_down.is_set() and not mouse_down.is_set():
+                time.sleep(0.1)   
+
+            print('Waiting for mouse up...')
+            # Wait for a mouse up to finish throw or strategem key release
+            while strat_down.is_set() and mouse_down.is_set():
+                time.sleep(0.1)
+
+            print('Finished')     
+
+        else:
+            print('No strategem detected...')
 
 
 def format(txt):
@@ -207,12 +214,16 @@ def format(txt):
     return txt.strip()
 
 
-model_path, model_arch = get_model_for_language("en", 2)
+# model_path, model_arch = get_model_for_language("en", 2)
+model_path, model_arch = get_model_for_language("en", 5)
 
-mic_transcriber = JamesTranscriber(model_path=model_path, model_arch=model_arch,
-                                update_interval=0.7, samplerate=16000, m_options={"vad_window_duration": "0.5",
-                                                                                "vad_max_segment_duration": "15", 
-                                                                                "transcription_interval": "0.05"})
+mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
+                                update_interval=0.5,
+                                samplerate=16000,
+                                m_options={"vad_window_duration": "0.3",
+                                "vad_max_segment_duration": "6",
+                                "transcription_interval": "0.4",
+                                "vad_threshold": "0.3"})
 
 class GoofyListener(TranscriptEventListener):
 
@@ -220,30 +231,65 @@ class GoofyListener(TranscriptEventListener):
     #     print(event.line.text)
 
     def on_line_completed(self, event):
-        global mouse_down
         raw_txt = format(event.line.text)
         print(raw_txt)
+        process_queue.put(raw_txt)
+        
 
+def tts_mainloop():
+    while True:
+        tts.say(tts_queue.get())
+        tts.runAndWait()
+
+def process_mainloop():
+
+    while True:
+
+        raw_txt = process_queue.get()
         # Add wake word fuzz!
-        if 'davis' in raw_txt:
-            print('Activated!')
-            tts.say('Right away sir')
-            tts.runAndWait()
+        wake_txt = rapidfuzz.process.extractOne(query='davis', 
+                                        choices=raw_txt.split(' '), 
+                                        scorer=rapidfuzz.fuzz.QRatio, 
+                                        score_cutoff=70)
 
-            formatted_txt = raw_txt.split('davis')[1].strip()
-            print(formatted_txt)
-            if 'and' in formatted_txt:
-                commands = formatted_txt.split('and')
-                # tts.say(f'multiple commands detected')
-                # tts.runAndWait()
+        print(wake_txt)
+        print(raw_txt)
 
-                for command in commands:
-                    # tts.say(f'Command {commands.index(command) +1}')
-                    # tts.runAndWait()
-                    enter_strategem(command)
+        if wake_txt is not None:
+            try:
 
-            else:
-                enter_strategem(formatted_txt)
+                print('Activated!')
+
+                raw_txt = raw_txt.replace(wake_txt[0], 'davis')
+
+                formatted_txt = raw_txt.split('davis')[1].strip()
+                print(formatted_txt)
+                if 'and' in formatted_txt:
+                    commands = formatted_txt.split('and')
+
+                    for command in commands:
+
+                        strat_queue.put(command)
+
+                else:
+                    strat_queue.put(formatted_txt)
+            except Exception as e:
+                print(e)
+
+TRANSCRIBER_RESET_INTERVAL = 300  # seconds
+
+def transcriber_reset_loop():
+    while True:
+        time.sleep(TRANSCRIBER_RESET_INTERVAL)
+        print("Resetting transcriber...")
+        tts_queue.put('Reset')
+        mic_transcriber.stop()
+        time.sleep(0.5)
+        mic_transcriber.start()
+        print("Transcriber reset.")
+        tts_queue.put('Back in the fight, sir!')
+
+
 
 print('Listening...')
 listener = GoofyListener()
@@ -252,6 +298,42 @@ mic_transcriber.start()
 
 print(subprocess.run("for i in $(pgrep python); do sudo renice -n -20 -p $i; done", shell=True, capture_output=True))
 
+mouse_down = threading.Event()
+strat_down = threading.Event()
+
+
+tts_queue = queue.Queue()
+tts_thread = threading.Thread(daemon=True, target=tts_mainloop)
+tts_thread.start()
+tts_queue.put('Ready to support democracy with you, sir')
+
+
+strat_queue = queue.Queue()
+strat_thread = threading.Thread(daemon=True, target=enter_stratagem)
+strat_thread.start()
+print('strat thread')
+process_queue = queue.Queue()
+process_thread = threading.Thread(daemon=True, target=process_mainloop)
+process_thread.start()
+
+print('process thread')
+
+reset_thread = threading.Thread(daemon=True, target=transcriber_reset_loop)
+reset_thread.start()
+
+
 while True:
-    mouse_down = mouse.is_pressed("left")
-    strat_down = mouse.is_pressed('x2')
+
+    if mouse.is_pressed("left"):
+        mouse_down.set()
+
+    else:
+        mouse_down.clear()
+
+    if mouse.is_pressed('x2'):
+        strat_down.set()
+        
+    else:
+        strat_down.clear()
+
+    time.sleep(0.1)
