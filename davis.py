@@ -5,6 +5,8 @@ import mouse
 import threading
 import subprocess
 import queue
+import pyttsx3
+import keyboard
 
 from moonshine_voice import(
     MicTranscriber,
@@ -14,6 +16,8 @@ from moonshine_voice import(
     transcriber
 )
 
+tts = pyttsx3.init()
+tts.setProperty('volume', 0.3)
 
 callins = {
     # Patriotic Administration Center
@@ -49,8 +53,9 @@ callins = {
     'jump pack': 'duudu',
     'eagle smoke': 'urud',
     'eagle rocket pods': 'urul',
-    'eagle 500 kg': 'urddd',
+    'eagle 500': 'urddd',
     'fast recon vehicle': 'ldrdrdu',
+    'supply truck': 'ldlldur',
 
     # Bridge
     'orbital precision': 'rru',
@@ -79,15 +84,19 @@ callins = {
     # Robotics workshop
     'machine gun sentry': 'durru',
     'gatling sentry': 'durl',
-    'mortar': 'durrd',
     'bullet dog': 'dulurd',
     'autocannon sentry': 'durulu',
     'rocket sentry': 'durrl',
     'ems mortar': 'durdr',
-    'mortar': 'durdr',
+    'mortar sentry': 'durdr',
     'patriot': 'ldruldd',
     'emancipator': 'ldruldu',
     'bastion': 'ldrdldudu',
+
+    # Python Commandos
+    'hot dog': 'dulull',
+    'chainsaw': 'dlrrd',
+    'maxigun': 'dlrduu',
 
 
     # Redacted Regiment
@@ -106,7 +115,7 @@ callins = {
     'reinforce': 'udrlu',
     'sos': 'udru',
     'resupply': 'ddur',
-    'eagle rearm': 'uulur',
+   # 'eagle rearm': 'uulur',
 
     #Objectives
     'sssd': 'ddduu',
@@ -132,7 +141,12 @@ replace_dict = {
     'barrage': '',
     'air strike': 'airstrike',
     'one twenty': '120',
+    'three eighty': '380',
+    'five hundred': '500',
+    'four': '4',
     ' strike': '',
+    'over the': 'orbital',
+    'over to': 'orbital',
     'orbitel': 'orbital',
     'orville': 'orbital',
     'century': 'sentry',
@@ -165,9 +179,12 @@ def enter_stratagem():
         formatted_txt = strat_queue.get()
         strategem = rapidfuzz.process.extract(query=formatted_txt, 
                                             choices=callins.keys(), 
-                                            scorer=rapidfuzz.fuzz.QRatio, 
-                                            score_cutoff=50)
+                                            scorer=rapidfuzz.fuzz.WRatio, 
+                                            score_cutoff=51,
+                                            processor=rapidfuzz.utils.default_process)
         
+        print(strategem)
+
         if strategem != []:
             tts_queue.put('Right away sir')
             strategem = strategem[0][0]
@@ -177,7 +194,7 @@ def enter_stratagem():
             print('Waiting for strategem key down or mouse up')
         
             # Strategem key is not held or the mouse is down
-            while not strat_down.is_set() and not mouse_down.is_set():
+            while not strat_down.is_set() or mouse_down.is_set():
                 time.sleep(0.1)
 
             for i in callins[strategem]:
@@ -200,6 +217,10 @@ def enter_stratagem():
 
             print('Finished')     
 
+            mic_transcriber.stop()
+            time.sleep(0.25)
+            mic_transcriber.start()
+
         else:
             print('No strategem detected...')
 
@@ -217,13 +238,16 @@ def format(txt):
 # model_path, model_arch = get_model_for_language("en", 2)
 model_path, model_arch = get_model_for_language("en", 5)
 
-mic_transcriber = MicTranscriber(model_path=model_path, model_arch=model_arch,
-                                update_interval=0.5,
-                                samplerate=16000,
-                                m_options={"vad_window_duration": "0.3",
-                                "vad_max_segment_duration": "6",
-                                "transcription_interval": "0.4",
-                                "vad_threshold": "0.3"})
+mic_transcriber = MicTranscriber(
+    model_path=model_path,
+    model_arch=model_arch,
+    update_interval=0.7,       
+    options={
+        "vad_window_duration": "0.25",      
+        "vad_max_segment_duration": "5",  
+        "transcription_interval": "0.2",     
+        "vad_threshold": "0.5",             
+    })
 
 class GoofyListener(TranscriptEventListener):
 
@@ -231,9 +255,10 @@ class GoofyListener(TranscriptEventListener):
     #     print(event.line.text)
 
     def on_line_completed(self, event):
-        raw_txt = format(event.line.text)
-        print(raw_txt)
-        process_queue.put(raw_txt)
+        if strat_down.is_set(): # Janky PTT, bound to same key as stratagem input
+            raw_txt = format(event.line.text)
+            print(raw_txt)
+            process_queue.put(raw_txt)
         
 
 def tts_mainloop():
@@ -241,16 +266,18 @@ def tts_mainloop():
         tts.say(tts_queue.get())
         tts.runAndWait()
 
+
 def process_mainloop():
 
     while True:
 
         raw_txt = process_queue.get()
         # Add wake word fuzz!
-        wake_txt = rapidfuzz.process.extractOne(query='davis', 
-                                        choices=raw_txt.split(' '), 
-                                        scorer=rapidfuzz.fuzz.QRatio, 
-                                        score_cutoff=70)
+        # wake_txt = rapidfuzz.process.extractOne(query='davis', 
+        #                                 choices=raw_txt.split(' '), 
+        #                                 scorer=rapidfuzz.fuzz.ratio, 
+        #                                 score_cutoff=70)
+        wake_txt = rapidfuzz.fuzz.partial_ratio_alignment('davis', raw_txt, score_cutoff=70)
 
         print(wake_txt)
         print(raw_txt)
@@ -260,9 +287,10 @@ def process_mainloop():
 
                 print('Activated!')
 
-                raw_txt = raw_txt.replace(wake_txt[0], 'davis')
-
-                formatted_txt = raw_txt.split('davis')[1].strip()
+                # raw_txt = raw_txt.replace(wake_txt.dest_end, 'davis')
+                # raw_txt = 'davis' + raw_txt[wake_txt.dest_end:]
+                # print(raw_txt)
+                formatted_txt = raw_txt[wake_txt.dest_end:].strip()
                 print(formatted_txt)
                 if 'and' in formatted_txt:
                     commands = formatted_txt.split('and')
@@ -273,10 +301,11 @@ def process_mainloop():
 
                 else:
                     strat_queue.put(formatted_txt)
+
             except Exception as e:
                 print(e)
 
-TRANSCRIBER_RESET_INTERVAL = 300  # seconds
+TRANSCRIBER_RESET_INTERVAL = 120  # seconds
 
 def transcriber_reset_loop():
     while True:
@@ -284,7 +313,7 @@ def transcriber_reset_loop():
         print("Resetting transcriber...")
         tts_queue.put('Reset')
         mic_transcriber.stop()
-        time.sleep(0.5)
+        time.sleep(1)
         mic_transcriber.start()
         print("Transcriber reset.")
         tts_queue.put('Back in the fight, sir!')
@@ -296,7 +325,7 @@ listener = GoofyListener()
 mic_transcriber.add_listener(listener)
 mic_transcriber.start()
 
-print(subprocess.run("for i in $(pgrep python); do sudo renice -n -20 -p $i; done", shell=True, capture_output=True))
+#print(subprocess.run("for i in $(pgrep python); do sudo renice -n -20 -p $i; done", shell=True, capture_output=True))
 
 mouse_down = threading.Event()
 strat_down = threading.Event()
@@ -318,8 +347,8 @@ process_thread.start()
 
 print('process thread')
 
-reset_thread = threading.Thread(daemon=True, target=transcriber_reset_loop)
-reset_thread.start()
+# reset_thread = threading.Thread(daemon=True, target=transcriber_reset_loop)
+# reset_thread.start()
 
 
 while True:
@@ -330,7 +359,8 @@ while True:
     else:
         mouse_down.clear()
 
-    if mouse.is_pressed('x2'):
+    # if mouse.is_pressed('x2'):
+    if keyboard.is_pressed('capslock'):  
         strat_down.set()
         
     else:
